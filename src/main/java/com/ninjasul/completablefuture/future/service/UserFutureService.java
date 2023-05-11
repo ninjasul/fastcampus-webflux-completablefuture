@@ -10,12 +10,14 @@ import com.ninjasul.completablefuture.future.repository.ImageFutureRepository;
 import com.ninjasul.completablefuture.future.repository.UserFutureRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 public class UserFutureService {
     private final UserFutureRepository userRepository;
     private final ArticleFutureRepository articleRepository;
@@ -63,21 +65,32 @@ public class UserFutureService {
 
         var followCountFuture = followRepository.countByUserId(userEntity.getId());
 
-        var image = imageFuture.get();
-        var articles = articlesFuture.get();
-        var followCount = followCountFuture.get();
+        return CompletableFuture.allOf(imageFuture, articlesFuture, followCountFuture)
+            .thenAcceptAsync(v -> {
+                log.info("Three futures are completed.");
+            })
+            .thenRunAsync(() -> {
+                log.info("Three futures are also completed.");
+            })
+            .thenApplyAsync(v -> {
+                try {
+                    var image = imageFuture.get();
+                    var articles = articlesFuture.get();
+                    var followCount = followCountFuture.get();
 
-        return CompletableFuture.completedFuture(
-            Optional.of(
-                new User(
-                    userEntity.getId(),
-                    userEntity.getName(),
-                    userEntity.getAge(),
-                    image,
-                    articles,
-                    followCount
-                )
-            )
-        );
+                    return Optional.of(
+                        new User(
+                            userEntity.getId(),
+                            userEntity.getName(),
+                            userEntity.getAge(),
+                            image,
+                            articles,
+                            followCount
+                        )
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
     }
 }
