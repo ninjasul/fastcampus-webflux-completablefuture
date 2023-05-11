@@ -5,6 +5,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -21,11 +23,18 @@ public class ArticleFutureRepository {
     }
 
     @SneakyThrows
-    public List<ArticleEntity> findAllByUserId(String userId) {
+    public CompletableFuture<List<ArticleEntity>> findAllByUserId(String userId) {
         log.info("ArticleRepository.findAllByUserId: {}", userId);
-        Thread.sleep(1000L);
-        return articleEntities.stream()
-            .filter(articleEntity -> articleEntity.getUserId().equals(userId))
-            .collect(Collectors.toList());
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return articleEntities.stream()
+                .filter(articleEntity -> articleEntity.getUserId().equals(userId))
+                .collect(Collectors.toList());
+        });
     }
 }

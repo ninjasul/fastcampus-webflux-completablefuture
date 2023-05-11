@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 @Slf4j
 public class ImageFutureRepository {
@@ -18,9 +20,16 @@ public class ImageFutureRepository {
     }
 
     @SneakyThrows
-    public Optional<ImageEntity> findById(String id) {
+    public CompletableFuture<Optional<ImageEntity>> findById(String id) {
         log.info("ImageRepository.findById: {}", id);
-        Thread.sleep(1000L);
-        return Optional.ofNullable(imageMap.get(id));
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return Optional.ofNullable(imageMap.get(id));
+        });
     }
 }

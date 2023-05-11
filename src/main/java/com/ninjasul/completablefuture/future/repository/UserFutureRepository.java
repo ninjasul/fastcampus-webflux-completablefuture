@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 @Slf4j
 public class UserFutureRepository {
@@ -17,10 +19,17 @@ public class UserFutureRepository {
     }
 
     @SneakyThrows
-    public Optional<UserEntity> findById(String userId) {
+    public CompletableFuture<Optional<UserEntity>> findById(String userId) {
         log.info("UserRepository.findById: {}", userId);
-        Thread.sleep(1000L);
-        var user = userMap.get(userId);
-        return Optional.ofNullable(user);
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            var user = userMap.get(userId);
+            return Optional.ofNullable(user);
+        });
     }
 }
