@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,24 +45,24 @@ class UserServiceFutureTest {
     }
 
     @Test
-    void getUserEmptyIfInvalidUserIdIsGiven() {
+    void getUserEmptyIfInvalidUserIdIsGiven() throws ExecutionException, InterruptedException {
         // given
         String userId = "invalid_user_id";
 
         // when
-        Optional<User> user = userFutureService.getUserById(userId);
+        Optional<User> user = userFutureService.getUserById(userId).get();
 
         // then
         assertTrue(user.isEmpty());
     }
 
     @Test
-    void testGetUser() {
+    void testGetUser() throws ExecutionException, InterruptedException {
         // given
         String userId = "1234";
 
         // when
-        Optional<User> optionalUser = userFutureService.getUserById(userId);
+        Optional<User> optionalUser = userFutureService.getUserById(userId).get();
 
         // then
         assertFalse(optionalUser.isEmpty());

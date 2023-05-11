@@ -25,13 +25,13 @@ public class UserFutureService {
     @SneakyThrows
     public CompletableFuture<Optional<User>> getUserById(String id) {
         return userRepository.findById(id)
-            .thenApply(this::getUser);
+            .thenCompose(this::getUser);
     }
 
     @SneakyThrows
-    private Optional<User> getUser(Optional<UserEntity> userEntityOptional) {
+    private CompletableFuture<Optional<User>> getUser(Optional<UserEntity> userEntityOptional) {
         if (userEntityOptional.isEmpty()) {
-            return Optional.empty();
+            return CompletableFuture.completedFuture(Optional.empty());
         }
         var userEntity = userEntityOptional.get();
 
@@ -52,14 +52,16 @@ public class UserFutureService {
 
         var followCount = followRepository.countByUserId(userEntity.getId()).get();
 
-        return Optional.of(
-            new User(
-                userEntity.getId(),
-                userEntity.getName(),
-                userEntity.getAge(),
-                image,
-                articles,
-                followCount
+        return CompletableFuture.completedFuture(
+            Optional.of(
+                new User(
+                    userEntity.getId(),
+                    userEntity.getName(),
+                    userEntity.getAge(),
+                    image,
+                    articles,
+                    followCount
+                )
             )
         );
     }
