@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -22,17 +23,22 @@ public class UserFutureService {
     private final FollowFutureRepository followRepository;
 
     @SneakyThrows
-    public Optional<User> getUserById(String id) {
-        return userRepository.findById(id).get()
-            .map(this::getUser);
+    public CompletableFuture<Optional<User>> getUserById(String id) {
+        return userRepository.findById(id)
+            .thenApply(this::getUser);
     }
 
     @SneakyThrows
-    private User getUser(UserEntity user) {
-        var image = imageRepository.findById(user.getProfileImageId()).get()
+    private Optional<User> getUser(Optional<UserEntity> userEntityOptional) {
+        if (userEntityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var userEntity = userEntityOptional.get();
+
+        var image = imageRepository.findById(userEntity.getProfileImageId()).get()
             .map(imageEntity -> new Image(imageEntity.getId(), imageEntity.getName(), imageEntity.getUrl()));
 
-        var articles = articleRepository.findAllByUserId(user.getId()).get()
+        var articles = articleRepository.findAllByUserId(userEntity.getId()).get()
             .stream()
             .map(articleEntity ->
                 new Article(
@@ -44,15 +50,17 @@ public class UserFutureService {
             )
             .collect(Collectors.toList());
 
-        var followCount = followRepository.countByUserId(user.getId()).get();
+        var followCount = followRepository.countByUserId(userEntity.getId()).get();
 
-        return new User(
-            user.getId(),
-            user.getName(),
-            user.getAge(),
-            image,
-            articles,
-            followCount
+        return Optional.of(
+            new User(
+                userEntity.getId(),
+                userEntity.getName(),
+                userEntity.getAge(),
+                image,
+                articles,
+                followCount
+            )
         );
     }
 }
